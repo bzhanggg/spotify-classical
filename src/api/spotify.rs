@@ -1,4 +1,4 @@
-use base64::{engine::general_purpose, Engine as _};
+use base64::{Engine as _, engine::general_purpose};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
@@ -19,12 +19,20 @@ pub enum SpotifyError {
 pub struct TokenResponse {
     pub access_token: String,
     pub token_type: String,
-    pub expires_in: u64
+    pub expires_in: u64,
 }
 
 pub struct SpotifyClient {
     client: Client,
-    access_token: String
+    access_token: String,
+}
+
+mod search {
+    static SEARCH_TYPES: &[&str] = &["album", "artist", "playlist", "track"];
+
+    pub fn search_type() -> String {
+        return SEARCH_TYPES.join(",");
+    }
 }
 
 impl SpotifyClient {
@@ -47,7 +55,27 @@ impl SpotifyClient {
 
         Ok(SpotifyClient {
             client,
-            access_token: token_response.access_token
+            access_token: token_response.access_token,
         })
+    }
+
+    pub async fn simple_search(
+        &self,
+        raw_search: String,
+    ) -> Result<serde_json::Value, SpotifyError> {
+        let response = self
+            .client
+            .get("https://api.spotify.com/v1/search")
+            .header("Authorization", format!("Bearer {}", self.access_token))
+            .query(&[
+                ("q", raw_search.as_str()),
+                ("type", &search::search_type()),
+                ("limit", "20"),
+            ])
+            .send()
+            .await?;
+        let result = response.json().await?;
+        println!("{}", result);
+        Ok(result)
     }
 }

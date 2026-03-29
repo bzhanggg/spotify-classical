@@ -1,11 +1,11 @@
-mod repl;
 mod api;
-
-use thiserror::Error;
+mod repl;
 
 use crate::api::spotify::{SpotifyClient, SpotifyError};
+use reedline_repl_rs::{Error, Repl};
+use thiserror::Error as ThisError;
 
-#[derive(Error, Debug)]
+#[derive(ThisError, Debug)]
 enum AppError {
     #[error("Spotify error: {0}")]
     Spotify(#[from] SpotifyError),
@@ -16,8 +16,8 @@ enum AppError {
 
 #[tokio::main]
 async fn main() -> Result<(), AppError> {
-    let spotify = SpotifyClient::new().await?;
+    let spotify_client = SpotifyClient::new().await?;
 
-    let mut repl = repl::create_repl()?;
+    let mut repl: Repl<SpotifyClient, Error> = repl::create_repl(spotify_client)?;
     repl.run().map_err(AppError::from)
 }
