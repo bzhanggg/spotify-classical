@@ -1,7 +1,7 @@
-use base64::{Engine as _, engine::general_purpose};
+use base64::Engine;
+use base64::engine::general_purpose;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -115,7 +115,7 @@ impl SpotifyClient {
                 ("q", raw_search.as_str()),
                 ("type", &search::search_type()),
                 ("genre", &search::genres()),
-                ("limit", "2"),
+                ("limit", "10"),
             ])
             .send()
             .await?;
