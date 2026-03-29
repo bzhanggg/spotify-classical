@@ -1,6 +1,7 @@
 use base64::{Engine as _, engine::general_purpose};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -22,8 +23,38 @@ struct TokenResponse {
     pub expires_in: u64,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Artist {
+    pub name: String,
+    pub id: String,
+    #[serde(default)]
+    pub uri: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Track {
+    pub name: String,
+    pub id: String,
+    pub artists: Vec<Artist>,
+    pub duration_ms: u64,
+    #[serde(default)]
+    pub uri: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct SearchResults {
+    pub artists: SearchCategory<Artist>,
+    pub tracks: SearchCategory<Track>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct SearchCategory<T> {
+    pub items: Vec<T>,
+    pub total: u32,
+}
+
 mod search {
-    static SEARCH_TYPES: &[&str] = &["album", "artist", "playlist", "track"];
+    static SEARCH_TYPES: &[&str] = &["artist", "track"];
     static GENRES: &[&str] = &[
         "renaissance",
         "baroque",
@@ -75,10 +106,7 @@ impl SpotifyClient {
         })
     }
 
-    pub async fn simple_search(
-        &self,
-        raw_search: String,
-    ) -> Result<serde_json::Value, SpotifyError> {
+    pub async fn simple_search(&self, raw_search: String) -> Result<SearchResults, SpotifyError> {
         let response = self
             .client
             .get("https://api.spotify.com/v1/search")
@@ -91,8 +119,7 @@ impl SpotifyClient {
             ])
             .send()
             .await?;
-        let result = response.json().await?;
-        println!("{}", result);
-        Ok(result)
+        let results: SearchResults = response.json().await?;
+        Ok(results)
     }
 }

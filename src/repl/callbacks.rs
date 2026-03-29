@@ -27,5 +27,22 @@ pub async fn search(
     println!("Search for: {}", search_string);
 
     let results = spotify_client.simple_search(search_string).await?;
-    Ok(Some(format!("{}", results)))
+
+    let mut output = String::new();
+    output.push_str("ARTISTS:\n");
+    for artist in &results.artists.items {
+        output.push_str(&format!("- {} ({})\n", artist.name, artist.id));
+    }
+    output.push_str("\nTRACKS:\n");
+    for track in &results.tracks.items {
+        let artists = track
+            .artists
+            .iter()
+            .map(|a| a.name.as_str())
+            .collect::<Vec<_>>()
+            .join(", ");
+        output.push_str(&format!("- {} - {}\n", track.name, artists));
+    }
+
+    Ok(Some(output))
 }
