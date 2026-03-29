@@ -1,5 +1,6 @@
-use reedline_repl_rs::clap::{Arg, ArgMatches, Command};
-use reedline_repl_rs::{Repl, Result};
+mod repl;
+
+use reedline_repl_rs::Result;
 use clap::Parser;
 
 #[derive(Parser)]
@@ -21,36 +22,8 @@ struct Cli {
     live: bool
 }
 
-fn help<T>(args: ArgMatches, _context: &mut T) -> Result<Option<std::string::String>> {
-    if let Some(command) = args.get_one::<String>("command") {
-        match command.as_str() {
-            "help" => {
-                println!("Usage: help [command]");
-                println!("Show this message or get help for a specific command.");
-            }
-            _ => {
-                println!("No help available for command '{}'", command);
-            }
-        }
-    }
-    else {
-        println!("Usage:");
-        println!("  help [command] - Show this message or get help for a specific command");
-    }
-    Ok(None)
-}
-
 fn main() -> Result<()> {
-    let mut repl = Repl::new(())
-        .with_name("SpotifyClassical")
-        .with_version("v0.0.1")
-        .with_description("Better classical music discovery on Spotify")
-        .with_banner("Welcome to SpotifyClassical! Type 'help' to see available commands.")
-        .with_command(
-            Command::new("help")
-                .arg(Arg::new("command").help("The command to get help for").required(false)),
-            help
-        );
+    let mut repl = repl::create_repl()?;
     repl.run()
 
     // let cli = Cli::parse();
