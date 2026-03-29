@@ -29,9 +29,21 @@ pub struct SpotifyClient {
 
 mod search {
     static SEARCH_TYPES: &[&str] = &["album", "artist", "playlist", "track"];
+    static GENRES: &[&str] = &[
+        "renaissance",
+        "baroque",
+        "classical",
+        "romantic",
+        "impressionism",
+        "20th century classical",
+        "contemporary classical",
+    ];
 
     pub fn search_type() -> String {
         return SEARCH_TYPES.join(",");
+    }
+    pub fn genres() -> String {
+        return GENRES.join(",");
     }
 }
 
@@ -53,6 +65,10 @@ impl SpotifyClient {
 
         let token_response: TokenResponse = response.json().await?;
 
+        if token_response.access_token.is_empty() {
+            return Err(SpotifyError::InvalidTokenResponse);
+        }
+
         Ok(SpotifyClient {
             client,
             access_token: token_response.access_token,
@@ -70,7 +86,8 @@ impl SpotifyClient {
             .query(&[
                 ("q", raw_search.as_str()),
                 ("type", &search::search_type()),
-                ("limit", "20"),
+                ("genre", &search::genres()),
+                ("limit", "2"),
             ])
             .send()
             .await?;
