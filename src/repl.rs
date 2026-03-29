@@ -1,7 +1,7 @@
 pub mod commands;
 
 use reedline_repl_rs::clap::{Arg, Command};
-use reedline_repl_rs::{Repl, Result, Error};
+use reedline_repl_rs::{Error, Repl, Result};
 
 pub fn create_repl() -> Result<Repl<(), Error>> {
     let repl = Repl::new(())
@@ -10,12 +10,13 @@ pub fn create_repl() -> Result<Repl<(), Error>> {
         .with_description("Better classical music discovery on Spotify")
         .with_banner("Welcome to SpotifyClassical! Type 'help' to see available commands.")
         .with_command(
-            Command::new("search")
-                .arg(Arg::new("search-string")
+            Command::new("search").arg(
+                Arg::new("search-string")
                     .help("Search for a piece, composer, etc.")
                     .num_args(1..)
-                    .required(true)),
-            commands::search
+                    .required(true),
+            ),
+            commands::search,
         );
     Ok(repl)
 }
