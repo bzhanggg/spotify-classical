@@ -1,4 +1,4 @@
-use base64::{engine::general_purpose, Engine as _};
+use base64::{Engine as _, engine::general_purpose};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
@@ -16,15 +16,35 @@ pub enum SpotifyError {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct TokenResponse {
+struct TokenResponse {
     pub access_token: String,
     pub token_type: String,
-    pub expires_in: u64
+    pub expires_in: u64,
+}
+
+mod search {
+    static SEARCH_TYPES: &[&str] = &["album", "artist", "playlist", "track"];
+    static GENRES: &[&str] = &[
+        "renaissance",
+        "baroque",
+        "classical",
+        "romantic",
+        "impressionism",
+        "20th century classical",
+        "contemporary classical",
+    ];
+
+    pub fn search_type() -> String {
+        return SEARCH_TYPES.join(",");
+    }
+    pub fn genres() -> String {
+        return GENRES.join(",");
+    }
 }
 
 pub struct SpotifyClient {
     client: Client,
-    access_token: String
+    access_token: String,
 }
 
 impl SpotifyClient {
@@ -45,9 +65,34 @@ impl SpotifyClient {
 
         let token_response: TokenResponse = response.json().await?;
 
+        if token_response.access_token.is_empty() {
+            return Err(SpotifyError::InvalidTokenResponse);
+        }
+
         Ok(SpotifyClient {
             client,
-            access_token: token_response.access_token
+            access_token: token_response.access_token,
         })
+    }
+
+    pub async fn simple_search(
+        &self,
+        raw_search: String,
+    ) -> Result<serde_json::Value, SpotifyError> {
+        let response = self
+            .client
+            .get("https://api.spotify.com/v1/search")
+            .header("Authorization", format!("Bearer {}", self.access_token))
+            .query(&[
+                ("q", raw_search.as_str()),
+                ("type", &search::search_type()),
+                ("genre", &search::genres()),
+                ("limit", "2"),
+            ])
+            .send()
+            .await?;
+        let result = response.json().await?;
+        println!("{}", result);
+        Ok(result)
     }
 }
