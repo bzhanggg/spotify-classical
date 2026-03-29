@@ -16,15 +16,10 @@ pub enum SpotifyError {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct TokenResponse {
+struct TokenResponse {
     pub access_token: String,
     pub token_type: String,
     pub expires_in: u64,
-}
-
-pub struct SpotifyClient {
-    client: Client,
-    access_token: String,
 }
 
 mod search {
@@ -45,6 +40,11 @@ mod search {
     pub fn genres() -> String {
         return GENRES.join(",");
     }
+}
+
+pub struct SpotifyClient {
+    client: Client,
+    access_token: String,
 }
 
 impl SpotifyClient {

@@ -1,11 +1,11 @@
-pub mod commands;
+pub mod callbacks;
 
 use crate::api::spotify::SpotifyClient;
-
+use crate::repl::callbacks::CallbackError;
 use reedline_repl_rs::clap::{Arg, Command};
-use reedline_repl_rs::{Error, Repl, Result};
+use reedline_repl_rs::{Repl, Result};
 
-pub fn create_repl(spotify_client: SpotifyClient) -> Result<Repl<SpotifyClient, Error>> {
+pub fn create_repl(spotify_client: SpotifyClient) -> Result<Repl<SpotifyClient, CallbackError>> {
     let repl = Repl::new(spotify_client)
         .with_name("SpotifyClassical")
         .with_version("v0.0.1")
@@ -18,7 +18,7 @@ pub fn create_repl(spotify_client: SpotifyClient) -> Result<Repl<SpotifyClient, 
                     .num_args(1..)
                     .required(true),
             ),
-            |args, context| Box::pin(commands::search::<SpotifyClient>(args, context)),
+            |args, context| Box::pin(callbacks::search(args, context)),
         );
     Ok(repl)
 }
